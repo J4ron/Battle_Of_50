@@ -106,7 +106,6 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
                 await RespondAsync("Ungültige Rollen-ID.", ephemeral: true);
             }
         }
-
         
         [ComponentInteraction("deny_button")]
         public async Task DenyButtonAsync()

@@ -55,6 +55,14 @@ namespace DiscordManagementBot.SlashCommandHandler.Handler;
             string teamAbbr = modal.TeamAbbreviation;
             string teamColor = modal.TeamColor;
             string teamPartnerName = modal.TeamPartner;
+            
+            var existingRole = Context.Guild.Roles.FirstOrDefault(r => r.Name.Equals(teamName, StringComparison.OrdinalIgnoreCase));
+
+            if (existingRole != null)
+            {
+                await RespondAsync($"Eine Team mit dem Namen '{teamName}' existiert bereits.", ephemeral: true);
+                return;
+            }
 
             if (!Regex.IsMatch(teamColor, @"^#[0-9A-Fa-f]{6}$"))
             {
@@ -69,6 +77,8 @@ namespace DiscordManagementBot.SlashCommandHandler.Handler;
                 await RespondAsync($"Der Benutzer '{teamPartnerName}' wurde nicht gefunden. Bitte überprüfe den Namen und versuche es erneut.", ephemeral: true);
                 return;
             }
+
+            await RespondAsync($"Eine Einladung zu dem team {@teamName} wurde an den Spieler {teamPartnerName} gesendet!", ephemeral: true);
             
             var createdRole = await Context.Guild.CreateRoleAsync(
                 teamName,
@@ -94,6 +104,7 @@ namespace DiscordManagementBot.SlashCommandHandler.Handler;
                 }
             );
 
+
             var overwritePermissions = new OverwritePermissions(
                 viewChannel: PermValue.Allow,
                 sendMessages: PermValue.Allow,
@@ -112,8 +123,18 @@ namespace DiscordManagementBot.SlashCommandHandler.Handler;
             await teamTextChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, denyPermissions);
             await voiceChannel.AddPermissionOverwriteAsync(Context.Guild.EveryoneRole, denyPermissions);
             
+            var teamembed = new EmbedBuilder()
+            {
+                Title = $"Team {teamName}",
+                Description = $"Weitere Informationen & Commands\n\n - /teamleave {teamName}\n\n -  /teaminvite USER {teamName}",
+                Color = Color.Orange
+            }.Build();
+            
+            await teamTextChannel.SendMessageAsync(embed: teamembed);
+            
             var creator = Context.User as SocketGuildUser;
             await creator.AddRoleAsync(createdRole);
+            
             
             var dmEmbed = new EmbedBuilder()
             {
@@ -126,17 +147,15 @@ namespace DiscordManagementBot.SlashCommandHandler.Handler;
                 .WithButton("Annehmen", $"team_accept:{createdRole}", ButtonStyle.Success)
                 .WithButton("Ablehnen", $"team_decline", ButtonStyle.Danger)
                 .Build();
-
+            
             try
             {
                 await teamPartner.SendMessageAsync(embed: dmEmbed, components: dmComponent);
-                await RespondAsync($"Team '{teamName}' wurde erstellt und eine Einladung an {teamPartner.Mention} wurde gesendet.", ephemeral: true);
             }
             catch
             {
                 await RespondAsync($"Team '{teamName}' wurde erstellt, aber die DM an {teamPartner.Mention} konnte nicht gesendet werden.", ephemeral: true);
             }
-            
         }
 
         [ComponentInteraction("team_accept:*")]
@@ -157,15 +176,14 @@ namespace DiscordManagementBot.SlashCommandHandler.Handler;
                 await RespondAsync("Der Benutzer konnte in der Guild nicht gefunden werden.", ephemeral: true);
                 return;
             }
-            Console.WriteLine(guildUser);
-            Console.WriteLine(guild);
             
             var role = guild.Roles.FirstOrDefault(r => r.Name.Equals(createdRoleName, StringComparison.OrdinalIgnoreCase));
-            Console.WriteLine(role);
+
             if (role != null)
             {
                 await guildUser.AddRoleAsync(role);
                 await RespondAsync($"Du hast die Rolle **{role.Name}** erhalten!", ephemeral: true);
+                
             }
             else
             {
@@ -202,3 +220,4 @@ namespace DiscordManagementBot.SlashCommandHandler.Handler;
             public string TeamPartner { get; set; }
         }
     }
+
