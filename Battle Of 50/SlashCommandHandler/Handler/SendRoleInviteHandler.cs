@@ -4,37 +4,47 @@ using Discord.WebSocket;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using Discord.Commands;
 
 namespace DiscordManagementBot.SlashCommandHandler.Commands
 {
     public class SendDmCommand : InteractionModuleBase<SocketInteractionContext>
     {
-        private const ulong GuildId = 1293570287228686459; // Deine Guild-ID
-        private ulong _roleIdToGive; // Rolle, die zugewiesen werden soll
-
-        [SlashCommand("senddm", "Sendet eine DM mit Buttons an einen Benutzer.")]
+        private const ulong GuildId = 1293570287228686459;
+        private ulong _roleIdToGive; 
+        
+        [SlashCommand("giveroleto", "Sendet eine DM mit Buttons an einen Benutzer.")]
         public async Task SendDmAsync(SocketUser user, SocketRole roleToGive)
         {
+            if (!((SocketGuildUser)Context.User).GuildPermissions.Administrator)
+            {
+                await RespondAsync("Du hast keine berechtigung für diesen Command.");
+                return;
+            }
+            
             if (user is not SocketGuildUser targetUser)
             {
                 await RespondAsync("Bitte wähle einen gültigen Benutzer aus.", ephemeral: true);
                 return;
             }
-
-            // Überprüfe, ob die Rolle gültig ist
+            
             if (roleToGive == null)
             {
                 await RespondAsync("Bitte wähle eine gültige Rolle aus.", ephemeral: true);
                 return;
             }
 
-            _roleIdToGive = roleToGive.Id; // Speichere die Rolle ID in einem Feld
-
-            // Buttons erstellen
+            
+            _roleIdToGive = roleToGive.Id;
+            Console.WriteLine(roleToGive.Id);
+            
             var confirmButton = new ButtonBuilder()
                 .WithLabel("Klicken um zu bestätigen")
-                .WithCustomId("confirm_button")
+                .WithCustomId($"confirm_button:{_roleIdToGive}") 
                 .WithStyle(ButtonStyle.Success);
+            
+            Console.WriteLine($"CustomId: confirm_button:{_roleIdToGive}");
+
 
             var denyButton = new ButtonBuilder()
                 .WithLabel("Ablehnen")
@@ -47,10 +57,9 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
 
             try
             {
-                // DM an den Benutzer senden
+
                 await targetUser.SendMessageAsync("Hallo! Drücke einen Button, um zu bestätigen oder abzulehnen.", components: component.Build());
 
-                // Bestätige den Command
                 await RespondAsync($"DM wurde erfolgreich an {targetUser.Username} gesendet. mit der RollenId {_roleIdToGive}", ephemeral: true);
             }
             catch (Exception ex)
@@ -58,20 +67,18 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
                 await RespondAsync($"Fehler beim Senden der DM: {ex.Message}", ephemeral: true);
             }
         }
-
-        // Button-Interaktion für Bestätigen
-        [ComponentInteraction("confirm_button")]
-        public async Task ConfirmButtonAsync()
+        
+        [ComponentInteraction("confirm_button:*")]
+        public async Task ConfirmButtonAsync(string roleId)
         {
-            var guild = Context.Client.GetGuild(GuildId); // Guild anhand der ID abrufen
+            var guild = Context.Client.GetGuild(GuildId);
 
             if (guild == null)
             {
                 await RespondAsync("Die Guild konnte nicht gefunden werden.", ephemeral: true);
                 return;
             }
-
-            // Hole den Benutzer in der Guild
+            
             var guildUser = guild.Users.FirstOrDefault(u => u.Id == Context.User.Id);
 
             if (guildUser == null)
@@ -79,25 +86,31 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
                 await RespondAsync("Der Benutzer konnte in der Guild nicht gefunden werden.", ephemeral: true);
                 return;
             }
-
-            // Hole die Rolle basierend auf der ID
-            var role = guild.Roles.FirstOrDefault(r => r.Id == _roleIdToGive);
-            if (role != null)
+            
+            if (ulong.TryParse(roleId, out ulong parsedRoleId))
             {
-                await guildUser.AddRoleAsync(role);
-                await RespondAsync($"Du hast die Rolle {role.Name} erhalten!", ephemeral: true);
+                var role = guild.Roles.FirstOrDefault(r => r.Id == parsedRoleId);
+                Console.WriteLine(parsedRoleId);
+                if (role != null)
+                {
+                    await guildUser.AddRoleAsync(role);
+                    await RespondAsync($"Du hast die Rolle {role.Name} erhalten!", ephemeral: true);
+                }
+                else
+                {
+                    await RespondAsync("Die Rolle konnte nicht gefunden werden.", ephemeral: true);
+                }
             }
             else
             {
-                await RespondAsync("Die Rolle konnte nicht gefunden werden.", ephemeral: true);
+                await RespondAsync("Ungültige Rollen-ID.", ephemeral: true);
             }
         }
 
-        // Button-Interaktion für Ablehnen
+        
         [ComponentInteraction("deny_button")]
         public async Task DenyButtonAsync()
         {
-            // Deaktiviere den Ablehnen-Button
             var disabledButton = new ButtonBuilder()
                 .WithLabel("Ablehnung bestätigt")
                 .WithCustomId("deny_button")

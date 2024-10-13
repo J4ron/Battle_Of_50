@@ -13,7 +13,7 @@ namespace DiscordManagementBot.SlashCommandHandler.Handler
         {
             if (!((SocketGuildUser)Context.User).GuildPermissions.BanMembers)
             {
-                await RespondAsync("You do not have permission to use this command.");
+                await RespondAsync("Du hast keine berechtigung für diesen Command.");
                 return;
             }
 
