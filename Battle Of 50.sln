@@ -1,0 +1,16 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Battle Of 50", "Battle Of 50\Battle Of 50.csproj", "{BBDD74F2-3799-4659-9A17-85F4EAD92780}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BBDD74F2-3799-4659-9A17-85F4EAD92780}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBDD74F2-3799-4659-9A17-85F4EAD92780}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBDD74F2-3799-4659-9A17-85F4EAD92780}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBDD74F2-3799-4659-9A17-85F4EAD92780}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
