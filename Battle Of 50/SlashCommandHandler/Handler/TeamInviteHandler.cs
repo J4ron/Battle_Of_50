@@ -2,6 +2,7 @@
 using Discord.Interactions;
 using Discord.WebSocket;
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -10,13 +11,13 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
     public class SendTeamInviteCommand : InteractionModuleBase<SocketInteractionContext>
     {
         private const ulong GuildId = 1293570287228686459; 
-        private ulong _roleIdToGive;
         private const int MaxTeamMembers = 2; 
         
+        private static readonly ConcurrentDictionary<ulong, (ulong RoleId, DateTime ExpirationTime, bool IsDeclined)> invitationStatuses = new();
+
         [SlashCommand("teaminvite", "Sendet eine DM mit Buttons an einen Benutzer.")]
         public async Task SendDmAsync(SocketUser user, string teamName)
         {
-            
             var guild = Context.Client.GetGuild(GuildId);
             if (guild == null)
             {
@@ -25,7 +26,6 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
             }
             
             var teamRole = guild.Roles.FirstOrDefault(r => string.Equals(r.Name, teamName, StringComparison.OrdinalIgnoreCase));
-
             if (teamRole == null)
             {
                 await RespondAsync("Es gibt keine Rolle mit diesem Teamnamen.", ephemeral: true);
@@ -51,16 +51,13 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
                 await RespondAsync("Bitte wähle einen gültigen Benutzer aus.", ephemeral: true);
                 return;
             }
-
-            _roleIdToGive = teamRole.Id;
-            Console.WriteLine(teamRole.Id);
+            
+            invitationStatuses[targetUser.Id] = (teamRole.Id, DateTime.UtcNow.AddMinutes(5), false);
 
             var confirmButton = new ButtonBuilder()
                 .WithLabel("Klicken um zu bestätigen")
-                .WithCustomId($"confirm:{_roleIdToGive}") 
+                .WithCustomId($"confirm:{teamRole.Id}") 
                 .WithStyle(ButtonStyle.Success);
-
-            Console.WriteLine($"CustomId: confirm:{_roleIdToGive}");
 
             var denyButton = new ButtonBuilder()
                 .WithLabel("Ablehnen")
@@ -71,9 +68,16 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
                 .WithButton(confirmButton)
                 .WithButton(denyButton);
 
+            var embed = new EmbedBuilder()
+            {
+                Title = "Team Einladungsanfrage",
+                Description = $"Du wurdest für das Team **{teamName}** eingeladen.\n\nDrücke einen Button, um zu bestätigen oder abzulehnen.",
+                Color = Color.Green
+            }.Build();
+
             try
             {
-                await targetUser.SendMessageAsync($"Hallo! Du wurdest für das Team **{teamName}** eingeladen. Drücke einen Button, um zu bestätigen oder abzulehnen.", components: component.Build());
+                await targetUser.SendMessageAsync(embed: embed, components: component.Build());
                 await RespondAsync($"DM wurde erfolgreich an {targetUser.Username} gesendet. Team: {teamName}", ephemeral: true);
             }
             catch (Exception ex)
@@ -86,7 +90,6 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
         public async Task ConfirmButtonAsync(string roleId)
         {
             var guild = Context.Client.GetGuild(GuildId);
-
             if (guild == null)
             {
                 await RespondAsync("Die Guild konnte nicht gefunden werden.", ephemeral: true);
@@ -94,28 +97,40 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
             }
 
             var guildUser = guild.Users.FirstOrDefault(u => u.Id == Context.User.Id);
-
             if (guildUser == null)
             {
                 await RespondAsync("Der Benutzer konnte in der Guild nicht gefunden werden.", ephemeral: true);
                 return;
             }
             
-            var currentTeamMembers = guild.Users.Count(u => u.Roles.Any(r => r.Id == ulong.Parse(roleId)));
-            if (currentTeamMembers >= MaxTeamMembers)
+            if (invitationStatuses.TryGetValue(Context.User.Id, out var invitation))
             {
-                await RespondAsync("Das Team hat bereits die maximale Anzahl an Mitgliedern erreicht. Du kannst nicht beitreten.", ephemeral: true);
-                return;
-            }
+                if (invitation.IsDeclined)
+                {
+                    await RespondAsync("Du hast die Einladung bereits abgelehnt und kannst sie nicht erneut annehmen.", ephemeral: true);
+                    return;
+                }
+                
+                if (DateTime.UtcNow > invitation.ExpirationTime)
+                {
+                    await RespondAsync("Die Einladung ist abgelaufen.", ephemeral: true);
+                    return;
+                }
 
-            if (ulong.TryParse(roleId, out ulong parsedRoleId))
-            {
-                var role = guild.Roles.FirstOrDefault(r => r.Id == parsedRoleId);
-                Console.WriteLine(parsedRoleId);
+                var currentTeamMembers = guild.Users.Count(u => u.Roles.Any(r => r.Id == invitation.RoleId));
+                if (currentTeamMembers >= MaxTeamMembers)
+                {
+                    await RespondAsync("Das Team hat bereits die maximale Anzahl an Mitgliedern erreicht. Du kannst nicht beitreten.", ephemeral: true);
+                    return;
+                }
+
+                var role = guild.Roles.FirstOrDefault(r => r.Id == invitation.RoleId);
                 if (role != null)
                 {
                     await guildUser.AddRoleAsync(role);
                     await RespondAsync($"Du hast das Team {role.Name} betreten!", ephemeral: true);
+                    
+                    invitationStatuses.TryRemove(Context.User.Id, out _);
                 }
                 else
                 {
@@ -124,13 +139,18 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
             }
             else
             {
-                await RespondAsync("Ungültige Rollen-ID.", ephemeral: true);
+                await RespondAsync("Du hast keine Einladung für dieses Team.", ephemeral: true);
             }
         }
 
         [ComponentInteraction("deny")]
         public async Task DenyButtonAsync()
         {
+            if (invitationStatuses.TryGetValue(Context.User.Id, out var invitation))
+            {
+                invitationStatuses[Context.User.Id] = (invitation.RoleId, invitation.ExpirationTime, true);
+            }
+
             var disabledButton = new ButtonBuilder()
                 .WithLabel("Ablehnung bestätigt")
                 .WithCustomId("deny")

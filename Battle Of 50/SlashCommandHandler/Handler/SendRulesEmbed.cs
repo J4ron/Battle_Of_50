@@ -50,8 +50,8 @@ public class SendRulesEmbed : InteractionModuleBase<SocketInteractionContext>
 
         rulesEmbed.WithColor(Color.Blue);
         
-        var battleChannel = Context.Guild.GetTextChannel(1295768002029158470); // Channel für Battle of 50 Konzept
-        var rulesChannel = Context.Guild.GetTextChannel(1295767962258772060);  // Channel für die Regeln
+        var battleChannel = Context.Guild.GetTextChannel(1295768002029158470);
+        var rulesChannel = Context.Guild.GetTextChannel(1295767962258772060); 
         
         if (battleChannel != null)
         {
