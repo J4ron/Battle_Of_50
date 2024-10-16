@@ -1,8 +1,7 @@
 ﻿using Discord.Interactions;
 using System.Threading.Tasks;
 
-namespace DiscordManagementBot.SlashCommandHandler.Response
-{
+namespace BattleOf50.SlashCommandHandler.Response;
     public class CommandResponses
     {
         public static async Task RespondAsync(InteractionContext context, string message)
@@ -10,4 +9,3 @@ namespace DiscordManagementBot.SlashCommandHandler.Response
             await context.Interaction.RespondAsync(message);
         }
     }
-}

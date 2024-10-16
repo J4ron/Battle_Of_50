@@ -1,11 +1,9 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using BattleOf50.SlashCommandHandler.Register;
 using Discord;
 using Discord.Interactions;
 using Discord.WebSocket;
 using DiscordManagementBot.Moderation.MemberCount;
-using DiscordManagementBot.SlashCommandHandler.Register;
-using DiscordManagementBot.SlashCommandHandler.Handler;
+
 
 namespace DiscordManagementBot
 {

@@ -16,6 +16,7 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
         [SlashCommand("teaminvite", "Sendet eine DM mit Buttons an einen Benutzer.")]
         public async Task SendDmAsync(SocketUser user, string teamName)
         {
+            
             var guild = Context.Client.GetGuild(GuildId);
             if (guild == null)
             {

@@ -103,8 +103,7 @@ namespace DiscordManagementBot.SlashCommandHandler.Handler;
                     properties.CategoryId = CategoryId;
                 }
             );
-
-
+            
             var overwritePermissions = new OverwritePermissions(
                 viewChannel: PermValue.Allow,
                 sendMessages: PermValue.Allow,

@@ -1,8 +1,7 @@
 ﻿using Discord.Interactions;
 using System.Threading.Tasks;
 
-namespace DiscordManagementBot.SlashCommandHandler.Register
-{
+namespace BattleOf50.SlashCommandHandler.Register;
     public class SlashCommandRegister
     {
         private readonly InteractionService _interactionService;
@@ -17,4 +16,3 @@ namespace DiscordManagementBot.SlashCommandHandler.Register
             await _interactionService.AddModulesAsync(System.Reflection.Assembly.GetEntryAssembly(), null);
         }
     }
-}

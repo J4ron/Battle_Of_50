@@ -12,12 +12,12 @@ namespace DiscordManagementBot.SlashCommandHandler.Handler
         {
             if (!((SocketGuildUser)Context.User).GuildPermissions.KickMembers)
             {
-                await RespondAsync("Du hast keine berechtigung für diesen Command.");
+                await RespondAsync("Du hast keine berechtigung für diesen Command.", ephemeral: true);
                 return;
             }
 
             await user.KickAsync(reason);
-            await RespondAsync($"{user} has been kicked for: {reason}");
+            await RespondAsync($"{user} has been kicked for: {reason}", ephemeral: true);
         }
     }
 }
