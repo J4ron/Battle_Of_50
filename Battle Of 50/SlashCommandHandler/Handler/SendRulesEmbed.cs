@@ -14,7 +14,7 @@ public class SendRulesEmbed : InteractionModuleBase<SocketInteractionContext>
         EmbedBuilder battleEmbed = new()
         {
             Title = "Battle of 50",
-            Description = "🌍 **Battle of 50** ist ein spannendes PvP-Minecraft-Projekt, in dem 50 Teams zu je 2 Spielern gegeneinander antreten. " +
+            Description = "🌍 **Battle of 50** ist ein spannendes PvP-Minecraft-Projekt, in dem 50 Spieler, 25 Teams zu je 2 Spielern gegeneinander antreten. " +
                           "Ziel ist es, als letztes Team zu überleben! Die Map (2000x2000 Blöcke) ist survival-freundlich. " +
                           "Erze wie Eisen und Gold werden automatisch geschmolzen, der Nether ist deaktiviert. Alle 30 Minuten erscheinen " +
                           "Loot-Drops mit seltenen Items wie Netherrite.\n\n" +

@@ -33,7 +33,6 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
                 await RespondAsync("Bitte wähle eine gültige Rolle aus.", ephemeral: true);
                 return;
             }
-
             
             _roleIdToGive = roleToGive.Id;
             Console.WriteLine(roleToGive.Id);
@@ -57,7 +56,6 @@ namespace DiscordManagementBot.SlashCommandHandler.Commands
 
             try
             {
-
                 await targetUser.SendMessageAsync("Hallo! Drücke einen Button, um zu bestätigen oder abzulehnen.", components: component.Build());
 
                 await RespondAsync($"DM wurde erfolgreich an {targetUser.Username} gesendet. mit der RollenId {_roleIdToGive}", ephemeral: true);
